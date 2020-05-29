@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyutils_v3",
-    version="0.0.1",
+    version="0.1",
     author="Lam Nguyen",
     author_email="lamfm95@gmail.com",
     description="A handy library inspired by kaldi/egs/wsj/utils",
