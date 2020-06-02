@@ -4,31 +4,29 @@
 
 import os, sys
 import argparse, textwrap
+import traceback
 
 import shutil
+from pathlib import Path
 import datetime
 
 import logging
 logger = logging.getLogger(__name__)
 
-import  coloredlogs
+import coloredlogs
 coloredlogs.install(logger=logger)
 
 
 DIRECTION='''
-This script runs archive a directory / a file
-by adding timestamp suffix to its name
+This script archives directories/files
 
-##  EXAMPLE(s):
-    $ $0 /data/kaldi_data
-    CWD    | /data
-    Before | kaldi_data
-    After  | [2020.20.02][09_30_00]__kaldi_data
-
-    $ $0 /data/kaldi_data/utt2spk
-    CWD    | /data/kaldi_data/
-    Before | utt2spk
-    After  | [2020.20.02][09_30_00]__utt2spk
+e.g:
+    $ $0 exp/source
+    $ tree exp
+    exp
+    |-- __archived__
+    |   |-- 2020_06_02-03_09_26-615104-source
+    ..
 '''
 
 
@@ -45,14 +43,45 @@ def get_args():
     return args
 
 
+def archive(source):
+    try:
+        timestamp = datetime.datetime.now().strftime('%Y_%m_%d-%H_%M_%S-%f')
+
+        if not os.path.exists(source):
+            logger.info('Skipping')
+            return True
+
+        source = os.path.abspath(source)
+
+        target = os.path.join(
+            Path(source).parent,
+            '__archived__',
+            timestamp + '-' + Path(source).name,
+        )
+
+        if os.path.exists(target):
+            logger.info('Skipping')
+            return True
+
+        os.makedirs(Path(target).parent, exist_ok=True)
+        shutil.move(source, target)
+        logger.info('Archived: {} --moved-> {}'.format(source, target))
+
+    except:
+        logger.error(traceback.format_exc())
+        return False
+
+    return True
+
+
 def main():
     args = get_args()
     Sources = args.sources
 
     for source in Sources:
-        time = datetime.datetime.now().strftime('%Y_%m_%d-%H_%M_%S-%f')
-        logger.info('archiving source: {}'.format(source))
-        logger.info('time: {}'.format(time))
+        logger.info('Archiving: {}'.format(source))
+        if not archive(source):
+            exit(1)
 
 
 if __name__ == '__main__':
